@@ -6,6 +6,8 @@ pygameを使用したシンプルなドライブゲームです。文字だけ�
 
 - **Python版** (`main.py`): React風のコンポーネント設計でリファクタリングされたpygameゲーム
 - **React版** (`textdrive-react/`): 同じゲームロジックをReact + TypeScriptで実装したWeb版
+- **React Native版** (`textdrive-mobile/`): モバイルアプリ版（iOS/Android対応）
+- **共通ライブラリ** (`shared/gameLogic.ts`): Web版とモバイル版で共有するゲームロジック
 
 ## ゲームの特徴
 
@@ -50,11 +52,32 @@ npm start
 
 ブラウザで `http://localhost:3000` を開いてゲームをプレイできます。
 
+### React Native版の実行
+
+2. React Nativeアプリの依存関係をインストール
+```bash
+cd textdrive-mobile
+npm install
+```
+
+3. 開発サーバーを起動
+```bash
+npx expo start
+```
+
+4. モバイルデバイスでExpo Goアプリを開き、QRコードをスキャンしてアプリを実行
+
 ## 操作方法
 
+### Web版・Python版
 - 左矢印キー: 左に移動
 - 右矢印キー: 右に移動
 - Rキー: ゲームオーバー時にリスタート
+
+### モバイル版
+- 左ボタン: 左に移動
+- 右ボタン: 右に移動
+- ゲームオーバー時にアラートでリスタート
 
 ## ゲームのルール
 
@@ -79,8 +102,22 @@ npm start
 - **状態管理**: React Hooks (useState, useEffect)
 - **アーキテクチャ**: コンポーネントベース設計
 
+### React Native版 (textdrive-mobile/)
+- **フレームワーク**: React Native + Expo + TypeScript
+- **プラットフォーム**: iOS/Android対応
+- **操作**: タッチボタンによる操作
+- **状態管理**: React Hooks (useState, useEffect)
+- **アーキテクチャ**: コンポーネントベース設計
+
+### 共通ライブラリ (shared/)
+- **ファイル**: `gameLogic.ts`
+- **内容**: ゲームロジック、定数、型定義
+- **共有**: Web版とモバイル版で共通使用
+
 ## 開発履歴
 
 - シンプルなpygame実装
 - React風のコンポーネント設計にリファクタリング
 - React + TypeScript版のWeb実装を追加
+- 共通ライブラリの作成とコード共有化
+- React Native + Expo版のモバイルアプリ実装を追加
