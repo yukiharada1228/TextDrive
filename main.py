@@ -225,7 +225,6 @@ while True:
 
             # スクロール後の当たり判定（プレイヤーが壁に押し込まれた場合）
             if check_collision():
-                print("ゲームオーバー")
                 game_over = True
 
     # 描画
