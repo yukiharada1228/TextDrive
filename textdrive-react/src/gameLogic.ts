@@ -48,46 +48,70 @@ export const createInitialGameState = (): GameState => ({
   gameOver: false,
 });
 
-// 新しいコース行を生成
+// 新しいコース行を生成 - 必ず通路を確保するアルゴリズム
 export const generateNewRow = (currentPattern: number): { row: string[], newPattern: number } => {
-  // random.choice([-1, 0, 1])
-  const randomChoice = [-1, 0, 1][Math.floor(Math.random() * 3)];
-  const newPattern = (currentPattern + randomChoice + COURSE_PATTERNS.length) % COURSE_PATTERNS.length;
-  
-  // 現在のパターンを取得
-  let pattern = COURSE_PATTERNS[newPattern];
-  
-  // パターンを9文字に調整
-  if (pattern.length < COLS) {
-    pattern += " ".repeat(COLS - pattern.length);
-  } else if (pattern.length > COLS) {
-    pattern = pattern.substring(0, COLS);
+  // 通路の幅（連続する空白の数）を1-3でランダム決定
+  const pathWidth = Math.floor(Math.random() * 3) + 1; // 1-3
+
+  // 通路の開始位置をランダム決定（通路が画面内に収まるように）
+  const maxStartPos = COLS - pathWidth;
+  const pathStart = Math.floor(Math.random() * (maxStartPos + 1));
+
+  // 行を生成：デフォルトは全て壁
+  const row = new Array(COLS).fill("■");
+
+  // 通路部分を空白にする
+  for (let i = pathStart; i < pathStart + pathWidth; i++) {
+    row[i] = " ";
   }
-  
-  return { row: pattern.split(''), newPattern };
+
+  // パターン番号は通路の開始位置を基準に決定（連続性のため）
+  const newPattern = pathStart % COURSE_PATTERNS.length;
+
+  return { row, newPattern };
 };
 
-// 初期コースを生成
+// 安全な行（真ん中が空いている）を生成
+export const createSafeRow = (): string[] => {
+  const pattern = COURSE_PATTERNS[0]; // "■■■   ■■■"
+  let adjustedPattern = pattern;
+  if (adjustedPattern.length < COLS) {
+    adjustedPattern += " ".repeat(COLS - adjustedPattern.length);
+  } else if (adjustedPattern.length > COLS) {
+    adjustedPattern = adjustedPattern.substring(0, COLS);
+  }
+  return adjustedPattern.split('');
+};
+
+// 初期コースを生成 - 上半分は通路確保、下半分は固定安全パターン
 export const initializeCourse = (): string[][] => {
   const courseRows: string[][] = [];
-  
-  // 最初に適当なパターンで埋める（ROWS - 1行）
-  let tempPattern = 0;
-  for (let i = 0; i < ROWS - 1; i++) {
-    const result = generateNewRow(tempPattern);
-    courseRows.push(result.row);
-    tempPattern = result.newPattern;
+  let currentPattern = 0;
+  const safeRowsCount = Math.floor(ROWS / 2);
+
+  // 上半分は通路確保アルゴリズムで生成
+  for (let i = 0; i < ROWS - safeRowsCount; i++) {
+    // 通路の幅（1-3）と位置をランダム決定
+    const pathWidth = Math.floor(Math.random() * 3) + 1;
+    const maxStartPos = COLS - pathWidth;
+    const pathStart = Math.floor(Math.random() * (maxStartPos + 1));
+
+    // 行を生成：デフォルトは全て壁
+    const row = new Array(COLS).fill("■");
+
+    // 通路部分を空白にする
+    for (let j = pathStart; j < pathStart + pathWidth; j++) {
+      row[j] = " ";
+    }
+
+    courseRows.push(row);
   }
-  
-  // 最後の行（一番下）を真ん中が空いているパターンに設定
-  let pattern = COURSE_PATTERNS[0];
-  if (pattern.length < COLS) {
-    pattern += " ".repeat(COLS - pattern.length);
-  } else if (pattern.length > COLS) {
-    pattern = pattern.substring(0, COLS);
+
+  // 下半分は固定の安全な行に設定
+  for (let i = 0; i < safeRowsCount; i++) {
+    courseRows.push(createSafeRow());
   }
-  courseRows.push(pattern.split(''));
-  
+
   return courseRows;
 };
 
@@ -96,7 +120,7 @@ export const checkCollision = (x: number, row: number, courseRows: string[][]): 
   // 指定した位置のコースデータを取得
   if (row < courseRows.length) {
     const courseRow = courseRows[row];
-    
+
     // 指定した位置に壁があるかチェック
     if (0 <= x && x < courseRow.length) {
       return courseRow[x] === "■";
@@ -166,10 +190,10 @@ export const updateGameState = (currentState: GameState, keys: { [key: string]: 
     const result = generateNewRow(newState.currentPattern);
     const newRow = result.row;
     newState.currentPattern = result.newPattern;
-    
+
     // course_rows.insert(0, new_row) と同じ処理
     newState.courseRows = [newRow, ...newState.courseRows];
-    
+
     // len(course_rows) > ROWS なら course_rows.pop() と同じ処理
     if (newState.courseRows.length > ROWS) {
       newState.courseRows = newState.courseRows.slice(0, ROWS);
