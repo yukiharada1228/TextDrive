@@ -84,6 +84,29 @@ function App() {
     keysRef.current[event.key] = false;
   }, []);
 
+  // タッチ操作
+  const handleLeftPress = useCallback(() => {
+    keysRef.current['left'] = true;
+    setTimeout(() => {
+      keysRef.current['left'] = false;
+    }, 100);
+  }, []);
+
+  const handleRightPress = useCallback(() => {
+    keysRef.current['right'] = true;
+    setTimeout(() => {
+      keysRef.current['right'] = false;
+    }, 100);
+  }, []);
+
+  // リスタート
+  const handleRestart = useCallback(() => {
+    const newState = createInitialGameState();
+    // pygameの実装に合わせて、リスタート時も空のコースから開始
+    newState.courseRows = [];
+    setGameState(newState);
+  }, []);
+
   // ゲームループ
   const gameLoop = useCallback((currentTime: number) => {
     // FPS制御
@@ -153,7 +176,7 @@ function App() {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          fontSize: '32px', // Pygameのフォントサイズ32に合わせる
+          fontSize: '28px',
           color: '#000', // 黒文字（Pygameと同じ）
           fontFamily: 'monospace', // 等幅フォント
           zIndex: 10,
@@ -187,14 +210,19 @@ function App() {
   return (
     <div style={{ 
       display: 'flex', 
-      justifyContent: 'center', 
+      flexDirection: 'column',
+      justifyContent: 'flex-start', 
       alignItems: 'center', 
       minHeight: '100vh',
+      height: '100vh',
+      padding: '10px',
       backgroundColor: '#fff', // 白背景（Pygameと同じ）
-      fontFamily: 'monospace' // 等幅フォント
+      fontFamily: 'monospace', // 等幅フォント
+      boxSizing: 'border-box'
     }}>
       <div style={{
-        width: `${SCREEN_WIDTH}px`,
+        width: '100%',
+        maxWidth: `${SCREEN_WIDTH}px`,
         height: `${SCREEN_HEIGHT}px`,
         backgroundColor: '#fff', // 白背景（Pygameと同じ）
         border: '1px solid #000', // 黒枠線
@@ -224,9 +252,77 @@ function App() {
           }}>
             <div style={{ fontSize: '20px', marginBottom: '10px' }}>ゲームオーバー</div>
             <div style={{ fontSize: '16px', marginBottom: '20px' }}>最終距離: {gameState.scrollOffset}</div>
-            <div style={{ fontSize: '14px' }}>Rキーでリスタート</div>
+            <div style={{ fontSize: '14px', marginBottom: '20px' }}>Rキーでリスタート</div>
+            <button
+              onClick={handleRestart}
+              style={{
+                backgroundColor: '#000',
+                color: '#fff',
+                border: 'none',
+                padding: '10px 20px',
+                fontSize: '16px',
+                fontFamily: 'monospace',
+                borderRadius: '5px',
+                cursor: 'pointer'
+              }}
+            >
+              リスタート
+            </button>
           </div>
         )}
+      </div>
+
+      {/* コントロールボタン */}
+      <div style={{
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        width: '100%',
+        maxWidth: `${SCREEN_WIDTH}px`,
+        marginTop: '20px',
+        padding: '0 20px',
+        marginBottom: '20px'
+      }}>
+        <button
+          onClick={handleLeftPress}
+          style={{
+            backgroundColor: '#000',
+            color: '#fff',
+            border: 'none',
+            width: '60px',
+            height: '60px',
+            borderRadius: '50%',
+            fontSize: '20px',
+            fontFamily: 'monospace',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            flexShrink: 0
+          }}
+        >
+          ←
+        </button>
+        <button
+          onClick={handleRightPress}
+          style={{
+            backgroundColor: '#000',
+            color: '#fff',
+            border: 'none',
+            width: '60px',
+            height: '60px',
+            borderRadius: '50%',
+            fontSize: '20px',
+            fontFamily: 'monospace',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            flexShrink: 0
+          }}
+        >
+          →
+        </button>
       </div>
     </div>
   );
