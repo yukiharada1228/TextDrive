@@ -90,11 +90,19 @@ npx expo start
 ### Python版 (main.py)
 - **フレームワーク**: pygame
 - **アーキテクチャ**: React風のコンポーネント設計
-- **主要クラス**:
+- **主要コンポーネント**:
   - `GameState`: ゲーム状態管理（Reactのstateに相当）
-  - `GameRenderer`: 描画コンポーネント
-  - `GameLogic`: ゲームロジック（純粋関数）
-  - `Game`: メインゲームクラス
+  - `CourseComponent`: コース描画コンポーネント
+  - `PlayerComponent`: プレイヤー描画コンポーネント
+  - `UIComponent`: UI描画コンポーネント
+  - `GameOverComponent`: ゲームオーバー画面コンポーネント
+  - `App`: メインアプリケーションクラス
+- **カスタムフック**:
+  - `use_scroll()`: スクロール処理
+  - `use_input()`: 入力処理
+- **純粋関数**:
+  - `generate_course_row()`: コース行生成（通路確保アルゴリズム）
+  - `check_collision()`: 衝突判定
 
 ### React版 (textdrive-react/)
 - **フレームワーク**: React 18 + TypeScript
@@ -121,3 +129,7 @@ npx expo start
 - React + TypeScript版のWeb実装を追加
 - 共通ライブラリの作成とコード共有化
 - React Native + Expo版のモバイルアプリ実装を追加
+- **v2.0**: コース生成アルゴリズムの大幅改良
+  - 通路確保アルゴリズムの実装（コースが塞がることを根本的に防止）
+  - より関数型プログラミングに近いアーキテクチャへのリファクタリング
+  - コンポーネントの細分化と責任分離の改善
