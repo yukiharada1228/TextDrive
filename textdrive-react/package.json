@@ -1,6 +1,8 @@
 {
-  "name": "textdrive-react",
+  "name": "textdrive",
   "version": "0.1.0",
+  "description": "TextDrive - 文字だけで作られたドライブゲーム。キーボードやタッチで車を操作し、障害物を避けながらできるだけ遠くまで走りましょう。",
+  "keywords": ["ゲーム", "ドライブゲーム", "レーシング", "ブラウザゲーム", "文字ゲーム", "TextDrive"],
   "private": true,
   "dependencies": {
     "@testing-library/dom": "^10.4.1",
