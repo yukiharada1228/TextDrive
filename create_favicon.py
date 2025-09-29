@@ -26,7 +26,7 @@ def create_favicon():
         # main.pyと同じフォントを使用
         font = None
         font_paths = [
-            "/System/Library/Fonts/ヒラギノ角ゴシック W3.ttc",  # main.pyと同じフォント
+            "/System/Library/Fonts/ヒラギノ角ゴシック W3.ttc",
         ]
         
         for font_path in font_paths:
