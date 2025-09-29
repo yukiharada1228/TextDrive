@@ -50,7 +50,8 @@ const CourseRow = memo(({ row, rowIndex }: { row: string[], rowIndex: number }) 
 function App() {
   const [gameState, setGameState] = useState<GameState>(() => {
     const initialState = createInitialGameState();
-    initialState.courseRows = initializeCourse();
+    // pygameの実装に合わせて、初期状態は空のコースから開始
+    initialState.courseRows = [];
     return initialState;
   });
   
@@ -72,7 +73,8 @@ function App() {
     if (event.key === 'r' || event.key === 'R') {
       if (gameStateRef.current.gameOver) {
         const newState = createInitialGameState();
-        newState.courseRows = initializeCourse();
+        // pygameの実装に合わせて、リスタート時も空のコースから開始
+        newState.courseRows = [];
         setGameState(newState);
       }
     }

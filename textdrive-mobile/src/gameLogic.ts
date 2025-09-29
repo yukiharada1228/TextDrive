@@ -48,27 +48,22 @@ export const createInitialGameState = (): GameState => ({
   gameOver: false,
 });
 
-// 新しいコース行を生成 - 必ず通路を確保するアルゴリズム
+// 新しいコース行を生成 - pygameの実装に合わせる
 export const generateNewRow = (currentPattern: number): { row: string[], newPattern: number } => {
-  // 通路の幅（連続する空白の数）を1-3でランダム決定
-  const pathWidth = Math.floor(Math.random() * 3) + 1; // 1-3
-
-  // 通路の開始位置をランダム決定（通路が画面内に収まるように）
-  const maxStartPos = COLS - pathWidth;
-  const pathStart = Math.floor(Math.random() * (maxStartPos + 1));
-
-  // 行を生成：デフォルトは全て壁
-  const row = new Array(COLS).fill("■");
-
-  // 通路部分を空白にする
-  for (let i = pathStart; i < pathStart + pathWidth; i++) {
-    row[i] = " ";
+  // pygameの実装と同じロジック：前のパターンから-1, 0, +1のいずれかをランダム選択
+  const patternChange = Math.floor(Math.random() * 3) - 1; // -1, 0, 1
+  const newPattern = (currentPattern + patternChange + COURSE_PATTERNS.length) % COURSE_PATTERNS.length;
+  
+  let pattern = COURSE_PATTERNS[newPattern];
+  
+  // パターンの長さをCOLSに調整
+  if (pattern.length < COLS) {
+    pattern += " ".repeat(COLS - pattern.length);
+  } else if (pattern.length > COLS) {
+    pattern = pattern.substring(0, COLS);
   }
-
-  // パターン番号は通路の開始位置を基準に決定（連続性のため）
-  const newPattern = pathStart % COURSE_PATTERNS.length;
-
-  return { row, newPattern };
+  
+  return { row: pattern.split(''), newPattern };
 };
 
 // 初期コースを生成
@@ -87,29 +82,12 @@ export const createSafeRow = (): string[] => {
 export const initializeCourse = (): string[][] => {
   const courseRows: string[][] = [];
   let currentPattern = 0;
-  const safeRowsCount = Math.floor(ROWS / 2);
 
-  // 上半分は通路確保アルゴリズムで生成
-  for (let i = 0; i < ROWS - safeRowsCount; i++) {
-    // 通路の幅（1-3）と位置をランダム決定
-    const pathWidth = Math.floor(Math.random() * 3) + 1;
-    const maxStartPos = COLS - pathWidth;
-    const pathStart = Math.floor(Math.random() * (maxStartPos + 1));
-
-    // 行を生成：デフォルトは全て壁
-    const row = new Array(COLS).fill("■");
-
-    // 通路部分を空白にする
-    for (let j = pathStart; j < pathStart + pathWidth; j++) {
-      row[j] = " ";
-    }
-
-    courseRows.push(row);
-  }
-
-  // 下半分は固定の安全な行に設定
-  for (let i = 0; i < safeRowsCount; i++) {
-    courseRows.push(createSafeRow());
+  // pygameの実装に合わせて、全ての行をパターンから生成
+  for (let i = 0; i < ROWS; i++) {
+    const result = generateNewRow(currentPattern);
+    courseRows.push(result.row);
+    currentPattern = result.newPattern;
   }
 
   return courseRows;

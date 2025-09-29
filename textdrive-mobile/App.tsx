@@ -58,7 +58,8 @@ const CourseRow = memo(({ row, rowIndex }: { row: string[], rowIndex: number }) 
 export default function App() {
   const [gameState, setGameState] = useState<GameState>(() => {
     const initialState = createInitialGameState();
-    initialState.courseRows = initializeCourse();
+    // pygameの実装に合わせて、初期状態は空のコースから開始
+    initialState.courseRows = [];
     return initialState;
   });
   
@@ -166,7 +167,8 @@ export default function App() {
   // リスタート
   const handleRestart = () => {
     const newState = createInitialGameState();
-    newState.courseRows = initializeCourse();
+    // pygameの実装に合わせて、リスタート時も空のコースから開始
+    newState.courseRows = [];
     setGameState(newState);
   };
 
@@ -188,7 +190,7 @@ export default function App() {
 
   return (
     <View style={styles.container}>
-      <StatusBar style="auto" />
+      <StatusBar />
       
       <View style={styles.gameContainer}>
         {!gameState.gameOver && (
