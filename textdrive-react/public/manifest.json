@@ -1,6 +1,6 @@
 {
-  "short_name": "TextDrive",
-  "name": "TextDrive - 文字ドライブゲーム",
+  "short_name": "文字だけドライブゲーム",
+  "name": "文字だけドライブゲーム - TextDrive",
   "description": "文字だけで作られたドライブゲーム。キーボードやタッチで車を操作し、障害物を避けながらできるだけ遠くまで走りましょう。",
   "categories": ["games", "entertainment"],
   "lang": "ja",
