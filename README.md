@@ -50,6 +50,13 @@ npm start
 
 ブラウザで `http://localhost:3000` を開いてゲームをプレイできます。
 
+## デプロイ
+
+このプロジェクトはVercelでデプロイされています。
+
+- **本番環境**: [https://text-drive.vercel.app/](https://text-drive.vercel.app/)
+
+Web版のゲームは上記のURLから直接プレイできます。
 
 ## 操作方法
 
@@ -89,15 +96,3 @@ npm start
 - **スタイリング**: CSS Modules
 - **状態管理**: React Hooks (useState, useEffect)
 - **アーキテクチャ**: コンポーネントベース設計
-
-
-## 開発履歴
-
-- シンプルなpygame実装
-- React風のコンポーネント設計にリファクタリング
-- React + TypeScript版のWeb実装を追加
-- pygame実装との完全統一
-  - コース生成ロジックをpygameの固定パターン方式に統一
-  - ゲーム開始時は空のコースから開始（pygameと同じ動作）
-  - 前のパターンから-1, 0, +1のいずれかをランダム選択するロジックを実装
-  - Python版とReact版で同一のゲーム体験を実現
