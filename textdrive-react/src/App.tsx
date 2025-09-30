@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef, memo } from 'react';
+import { useState, useEffect, useCallback, useRef, memo, useMemo } from 'react';
 import { createInitialGameState, updateGameState, CONFIG} from './gameLogic';
 import type { GameState } from './gameLogic';
 
@@ -98,42 +98,53 @@ const useTouchControls = () => {
 
 // コース行コンポーネント
 const CourseRow = memo(({ row, rowIndex }: { row: string[], rowIndex: number }) => {
+  // セル要素をメモ化
+  const cells = useMemo(() => 
+    row.map((char, colIndex) => (
+      <div
+        key={`${rowIndex}-${colIndex}`}
+        className="bg-white flex items-center justify-center text-5xl font-mono"
+        style={{
+          width: `${CONFIG.CELL_SIZE}px`,
+          height: `${CONFIG.CELL_SIZE}px`,
+          color: char === "■" ? '#000' : '#fff',
+        }}
+      >
+        {char === "■" ? "■" : "　"}
+      </div>
+    )), [row, rowIndex]
+  );
+
+  // 行のスタイルをメモ化
+  const rowStyle = useMemo(() => ({
+    top: `${rowIndex * CONFIG.CELL_SIZE}px`,
+    height: `${CONFIG.CELL_SIZE}px`,
+  }), [rowIndex]);
+
   return (
     <div 
       className="absolute left-0 w-full flex"
-      style={{
-        top: `${rowIndex * CONFIG.CELL_SIZE}px`,
-        height: `${CONFIG.CELL_SIZE}px`,
-      }}
+      style={rowStyle}
     >
-      {row.map((char, colIndex) => (
-        <div
-          key={`${rowIndex}-${colIndex}`}
-          className="bg-white flex items-center justify-center text-5xl font-mono"
-          style={{
-            width: `${CONFIG.CELL_SIZE}px`,
-            height: `${CONFIG.CELL_SIZE}px`,
-            color: char === "■" ? '#000' : '#fff',
-          }}
-        >
-          {char === "■" ? "■" : "　"}
-        </div>
-      ))}
+      {cells}
     </div>
   );
 });
 
 // プレイヤーコンポーネント
 const Player = memo(({ x, row }: { x: number, row: number }) => {
+  // プレイヤーのスタイルをメモ化
+  const playerStyle = useMemo(() => ({
+    left: `${x * CONFIG.CELL_SIZE}px`,
+    top: `${row * CONFIG.CELL_SIZE}px`,
+    width: `${CONFIG.CELL_SIZE}px`,
+    height: `${CONFIG.CELL_SIZE}px`,
+  }), [x, row]);
+
   return (
     <div
       className="absolute flex items-center justify-center text-2xl font-mono text-black z-10"
-      style={{
-        left: `${x * CONFIG.CELL_SIZE}px`,
-        top: `${row * CONFIG.CELL_SIZE}px`,
-        width: `${CONFIG.CELL_SIZE}px`,
-        height: `${CONFIG.CELL_SIZE}px`,
-      }}
+      style={playerStyle}
     >
       車
     </div>
@@ -213,16 +224,21 @@ const GameScreen = memo(({
   playerRow: number, 
   distance: number 
 }) => {
+
+  const memoizedCourseRows = useMemo(() => 
+    courseRows.map((row, index) => (
+      <CourseRow 
+        key={index} 
+        row={row} 
+        rowIndex={index} 
+      />
+    )), [courseRows]
+  );
+
   return (
     <>
       <div className="relative w-full h-full">
-        {courseRows.map((row, index) => (
-          <CourseRow 
-            key={index} 
-            row={row} 
-            rowIndex={index} 
-          />
-        ))}
+        {memoizedCourseRows}
       </div>
       <Player x={playerX} row={playerRow} />
       <ScoreDisplay distance={distance} />
