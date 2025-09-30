@@ -19,7 +19,7 @@
 
 1. リポジトリをクローン
 ```bash
-git clone https://github.com/your-username/TextDrive.git
+git clone https://github.com/yukiharada1228/TextDrive.git
 cd TextDrive
 ```
 
