@@ -1,11 +1,11 @@
 # TextDrive - 文字だけドライブゲーム
 
-pygameを使用したシンプルなドライブゲームです。文字だけで構成されたコースを車で走り抜けます。
+シンプルなドライブゲームです。文字だけで構成されたコースを車で走り抜けます。
 
 ## プロジェクト構成
 
 - **Python版** (`main.py`): React風のコンポーネント設計でリファクタリングされたpygameゲーム
-- **React版** (`textdrive-react/`): 同じゲームロジックをReact + TypeScriptで実装したWeb版
+- **React版** (`textdrive-react/`): React + TypeScript + Tailwind CSSで実装したWeb版（メイン）
 
 ## ゲームの特徴
 
@@ -35,7 +35,7 @@ uv sync
 uv run main.py
 ```
 
-### React版の実行
+### React版の実行（推奨）
 
 2. Reactアプリの依存関係をインストール
 ```bash
@@ -45,10 +45,15 @@ npm install
 
 3. 開発サーバーを起動
 ```bash
-npm start
+npm run dev
 ```
 
-ブラウザで `http://localhost:3000` を開いてゲームをプレイできます。
+ブラウザで `http://localhost:5173` を開いてゲームをプレイできます。
+
+4. 本番ビルド
+```bash
+npm run build
+```
 
 ## デプロイ
 
@@ -57,6 +62,14 @@ npm start
 - **本番環境**: [https://text-drive.vercel.app/](https://text-drive.vercel.app/)
 
 Web版のゲームは上記のURLから直接プレイできます。
+
+## 開発環境
+
+- **Node.js**: 18.x以上
+- **Python**: 3.12以上
+- **パッケージマネージャー**: 
+  - Python版: `uv`
+  - React版: `npm`
 
 ## 操作方法
 
@@ -92,7 +105,17 @@ Web版のゲームは上記のURLから直接プレイできます。
   - `check_collision()`: 衝突判定
 
 ### React版 (textdrive-react/)
-- **フレームワーク**: React 18 + TypeScript
-- **スタイリング**: CSS Modules
-- **状態管理**: React Hooks (useState, useEffect)
+- **フレームワーク**: React 19 + TypeScript
+- **ビルドツール**: Vite
+- **スタイリング**: Tailwind CSS
+- **状態管理**: React Hooks (useState, useEffect, useCallback, useRef)
 - **アーキテクチャ**: コンポーネントベース設計
+- **主要コンポーネント**:
+  - `App`: メインアプリケーションコンポーネント
+  - `GameCanvas`: ゲーム描画エリア
+  - `GameUI`: スコア表示UI
+  - `GameOverScreen`: ゲームオーバー画面
+- **カスタムフック**:
+  - `useKeyboardInput`: キーボード入力管理
+  - `useGameLoop`: ゲームループ管理
+- **ゲームロジック**: `gameLogic.ts`で分離された純粋関数群
