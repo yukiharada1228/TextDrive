@@ -1,15 +1,22 @@
+// ========================
 // ゲーム定数
-export const SCREEN_WIDTH = 360;
-export const SCREEN_HEIGHT = 600;
-export const CELL_SIZE = 40;
-export const ROWS = Math.floor(SCREEN_HEIGHT / CELL_SIZE); // 15
-export const COLS = 9;
-export const FPS = 60;
-export const SCROLL_SPEED = 10;
-export const KEY_REPEAT_DELAY = 5;
+// ========================
+export const CONFIG = {
+  SCREEN_WIDTH: 360,
+  SCREEN_HEIGHT: 600,
+  CELL_SIZE: 40,
+  COLS: 9,
+  FPS: 60,
+  SCROLL_SPEED: 10,
+  KEY_REPEAT_DELAY: 5,
+};
 
+const ROWS = Math.floor(CONFIG.SCREEN_HEIGHT / CONFIG.CELL_SIZE);
+
+// ========================
 // コースパターン
-export const COURSE_PATTERNS = [
+// ========================
+const COURSE_PATTERNS = [
   "■■■   ■■■",
   "■■■■   ■■",
   "■■■■■   ■",
@@ -24,7 +31,9 @@ export const COURSE_PATTERNS = [
   "■■   ■■■■",
 ];
 
-// ゲーム状態の型定義
+// ========================
+// 型定義
+// ========================
 export interface GameState {
   playerX: number;
   playerRow: number;
@@ -36,10 +45,39 @@ export interface GameState {
   gameOver: boolean;
 }
 
-// 初期ゲーム状態
+// ========================
+// ユーティリティ
+// ========================
+const nextPatternIndex = (current: number): number => {
+  const change = Math.floor(Math.random() * 3) - 1; // -1, 0, +1
+  return (current + change + COURSE_PATTERNS.length) % COURSE_PATTERNS.length;
+};
+
+const rowFromPattern = (patternIndex: number): string[] =>
+  COURSE_PATTERNS[patternIndex].split("");
+
+// ========================
+// コース生成
+// ========================
+const generateNewRow = (currentPattern: number): { row: string[]; newPattern: number } => {
+  const newPattern = nextPatternIndex(currentPattern);
+  return { row: rowFromPattern(newPattern), newPattern };
+};
+
+// ========================
+// 当たり判定
+// ========================
+const checkCollision = (x: number, row: number, courseRows: string[][]): boolean => {
+  if (row >= courseRows.length || x < 0 || x >= courseRows[row].length) return false;
+  return courseRows[row][x] === "■";
+};
+
+// ========================
+// 初期状態
+// ========================
 export const createInitialGameState = (): GameState => ({
-  playerX: Math.floor(COLS / 2), // 中央からスタート
-  playerRow: ROWS - 2, // 下から2行目
+  playerX: Math.floor(CONFIG.COLS / 2),
+  playerRow: ROWS - 2,
   scrollOffset: 0,
   currentPattern: 0,
   scrollTimer: 0,
@@ -48,142 +86,56 @@ export const createInitialGameState = (): GameState => ({
   gameOver: false,
 });
 
-// 新しいコース行を生成 - pygameの実装に合わせる
-export const generateNewRow = (currentPattern: number): { row: string[], newPattern: number } => {
-  // pygameの実装と同じロジック：前のパターンから-1, 0, +1のいずれかをランダム選択
-  const patternChange = Math.floor(Math.random() * 3) - 1; // -1, 0, 1
-  const newPattern = (currentPattern + patternChange + COURSE_PATTERNS.length) % COURSE_PATTERNS.length;
-  
-  let pattern = COURSE_PATTERNS[newPattern];
-  
-  // パターンの長さをCOLSに調整
-  if (pattern.length < COLS) {
-    pattern += " ".repeat(COLS - pattern.length);
-  } else if (pattern.length > COLS) {
-    pattern = pattern.substring(0, COLS);
+// ========================
+// 入力処理
+// ========================
+const handleInput = (state: GameState, keys: { [key: string]: boolean }): GameState => {
+  if (state.keyTimer > 0) return { ...state, keyTimer: state.keyTimer - 1 };
+
+  let dx = 0;
+  if (keys["ArrowLeft"] || keys["left"]) dx = -1;
+  if (keys["ArrowRight"] || keys["right"]) dx = 1;
+
+  if (dx === 0) return state;
+
+  const newX = state.playerX + dx;
+  if (newX < 0 || newX >= CONFIG.COLS) return state; // 画面外
+
+  const newState = { ...state, playerX: newX, keyTimer: CONFIG.KEY_REPEAT_DELAY };
+  if (checkCollision(newX, newState.playerRow, newState.courseRows)) {
+    newState.gameOver = true;
   }
-  
-  return { row: pattern.split(''), newPattern };
+  return newState;
 };
 
-// 安全な行（真ん中が空いている）を生成
-export const createSafeRow = (): string[] => {
-  const pattern = COURSE_PATTERNS[0]; // "■■■   ■■■"
-  let adjustedPattern = pattern;
-  if (adjustedPattern.length < COLS) {
-    adjustedPattern += " ".repeat(COLS - adjustedPattern.length);
-  } else if (adjustedPattern.length > COLS) {
-    adjustedPattern = adjustedPattern.substring(0, COLS);
-  }
-  return adjustedPattern.split('');
-};
+// ========================
+// スクロール処理
+// ========================
+const handleScroll = (state: GameState): GameState => {
+  let newState = { ...state, scrollTimer: state.scrollTimer + 1 };
 
-// 初期コースを生成 - 上半分は通路確保、下半分は固定安全パターン
-export const initializeCourse = (): string[][] => {
-  const courseRows: string[][] = [];
-  let currentPattern = 0;
+  if (newState.scrollTimer < CONFIG.SCROLL_SPEED) return newState;
+  newState.scrollTimer = 0;
 
-  // pygameの実装に合わせて、全ての行をパターンから生成
-  for (let i = 0; i < ROWS; i++) {
-    const result = generateNewRow(currentPattern);
-    courseRows.push(result.row);
-    currentPattern = result.newPattern;
+  const { row, newPattern } = generateNewRow(newState.currentPattern);
+  newState.currentPattern = newPattern;
+  newState.courseRows = [row, ...newState.courseRows].slice(0, ROWS);
+  newState.scrollOffset++;
+
+  if (checkCollision(newState.playerX, newState.playerRow, newState.courseRows)) {
+    newState.gameOver = true;
   }
 
-  return courseRows;
+  return newState;
 };
 
-// 当たり判定
-export const checkCollision = (x: number, row: number, courseRows: string[][]): boolean => {
-  // 指定した位置のコースデータを取得
-  if (row < courseRows.length) {
-    const courseRow = courseRows[row];
-
-    // 指定した位置に壁があるかチェック
-    if (0 <= x && x < courseRow.length) {
-      return courseRow[x] === "■";
-    }
-  }
-  return false;
-};
-
-// 移動可能かチェック
-export const canMoveTo = (newX: number): boolean => {
-  if (newX < 0 || newX >= COLS) {
-    return false;
-  }
-  return true; // 壁のチェックは移動後に実行
-};
-
-// ゲームループの更新処理
+// ========================
+// ゲーム更新
+// ========================
 export const updateGameState = (currentState: GameState, keys: { [key: string]: boolean }): GameState => {
-  if (currentState.gameOver) {
-    return currentState;
-  }
+  if (currentState.gameOver) return currentState;
 
-  let newState = { ...currentState };
-
-  // キー入力処理（横移動時の当たり判定を含む）
-  if (newState.keyTimer <= 0) {
-    let moved = false;
-
-    // 左移動
-    if (keys['ArrowLeft'] || keys['left']) {
-      const newX = newState.playerX - 1;
-      if (newX >= 0) { // 画面外チェックのみ
-        newState.playerX = newX;
-        moved = true;
-        // 移動後に壁に当たったかチェック
-        if (checkCollision(newX, newState.playerRow, newState.courseRows)) {
-          newState.gameOver = true;
-        }
-      }
-    }
-    // 右移動
-    else if (keys['ArrowRight'] || keys['right']) {
-      const newX = newState.playerX + 1;
-      if (newX < COLS) { // 画面外チェックのみ
-        newState.playerX = newX;
-        moved = true;
-        // 移動後に壁に当たったかチェック
-        if (checkCollision(newX, newState.playerRow, newState.courseRows)) {
-          newState.gameOver = true;
-        }
-      }
-    }
-
-    if (moved) {
-      newState.keyTimer = KEY_REPEAT_DELAY;
-    }
-  } else {
-    newState.keyTimer -= 1;
-  }
-
-  // スクロール処理
-  newState.scrollTimer += 1;
-  if (newState.scrollTimer >= SCROLL_SPEED) {
-    newState.scrollTimer = 0;
-
-    // 上に新しい行を追加、下の行を削除
-    const result = generateNewRow(newState.currentPattern);
-    const newRow = result.row;
-    newState.currentPattern = result.newPattern;
-
-    // course_rows.insert(0, new_row) と同じ処理
-    newState.courseRows = [newRow, ...newState.courseRows];
-
-    // len(course_rows) > ROWS なら course_rows.pop() と同じ処理
-    if (newState.courseRows.length > ROWS) {
-      newState.courseRows = newState.courseRows.slice(0, ROWS);
-    }
-
-    newState.scrollOffset += 1;
-
-    // スクロール後の当たり判定（プレイヤーが壁に押し込まれた場合）
-    if (checkCollision(newState.playerX, newState.playerRow, newState.courseRows)) {
-      newState.gameOver = true;
-    }
-  }
-
+  let newState = handleInput(currentState, keys);
+  newState = handleScroll(newState);
   return newState;
 };

@@ -1,43 +1,119 @@
-import React, { useState, useEffect, useCallback, useRef, memo } from 'react';
-import {
-  createInitialGameState,
-  initializeCourse,
-  updateGameState,
-  GameState,
-  SCREEN_WIDTH,
-  SCREEN_HEIGHT,
-  CELL_SIZE,
-  ROWS,
-  COLS,
-  FPS
-} from './gameLogic';
+import { useState, useEffect, useCallback, useRef, memo } from 'react';
+import { createInitialGameState, updateGameState, CONFIG} from './gameLogic';
+import type { GameState } from './gameLogic';
+
+// ========================================
+// カスタムフック
+// ========================================
+
+// キーボード入力管理
+const useKeyboardInput = (onRestart: () => void, isGameOver: boolean) => {
+  const keysRef = useRef<{ [key: string]: boolean }>({});
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      keysRef.current[event.key] = true;
+      
+      if ((event.key === 'r' || event.key === 'R') && isGameOver) {
+        onRestart();
+      }
+    };
+
+    const handleKeyUp = (event: KeyboardEvent) => {
+      keysRef.current[event.key] = false;
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener('keyup', handleKeyUp);
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('keyup', handleKeyUp);
+    };
+  }, [onRestart, isGameOver]);
+
+  return keysRef;
+};
+
+// ゲームループ管理
+const useGameLoop = (
+  gameState: GameState,
+  setGameState: React.Dispatch<React.SetStateAction<GameState>>,
+  keysRef: React.RefObject<{ [key: string]: boolean }>
+) => {
+  const gameStateRef = useRef<GameState>(gameState);
+  const lastTimeRef = useRef<number>(0);
+
+  useEffect(() => {
+    gameStateRef.current = gameState;
+  }, [gameState]);
+
+  useEffect(() => {
+    const gameLoop = (currentTime: number) => {
+      if (currentTime - lastTimeRef.current < 1000 / CONFIG.FPS) {
+        requestAnimationFrame(gameLoop);
+        return;
+      }
+      
+      lastTimeRef.current = currentTime;
+      const currentState = gameStateRef.current;
+
+      if (!currentState.gameOver) {
+        const newState = updateGameState(currentState, keysRef.current);
+        setGameState(newState);
+      }
+
+      requestAnimationFrame(gameLoop);
+    };
+
+    const animationId = requestAnimationFrame(gameLoop);
+    return () => cancelAnimationFrame(animationId);
+  }, [setGameState, keysRef]);
+};
+
+// タッチコントロール管理
+const useTouchControls = () => {
+  const keysRef = useRef<{ [key: string]: boolean }>({});
+
+  const pressLeft = useCallback(() => {
+    keysRef.current['left'] = true;
+    setTimeout(() => {
+      keysRef.current['left'] = false;
+    }, 100);
+  }, []);
+
+  const pressRight = useCallback(() => {
+    keysRef.current['right'] = true;
+    setTimeout(() => {
+      keysRef.current['right'] = false;
+    }, 100);
+  }, []);
+
+  return { keysRef, pressLeft, pressRight };
+};
+
+// ========================================
+// コンポーネント
+// ========================================
 
 // コース行コンポーネント
 const CourseRow = memo(({ row, rowIndex }: { row: string[], rowIndex: number }) => {
   return (
     <div 
+      className="absolute left-0 w-full flex"
       style={{
-        position: 'absolute',
-        top: `${rowIndex * CELL_SIZE}px`,
-        left: 0,
-        width: '100%',
-        height: `${CELL_SIZE}px`,
-        display: 'flex',
+        top: `${rowIndex * CONFIG.CELL_SIZE}px`,
+        height: `${CONFIG.CELL_SIZE}px`,
       }}
     >
       {row.map((char, colIndex) => (
         <div
           key={`${rowIndex}-${colIndex}`}
+          className="bg-white flex items-center justify-center text-5xl font-mono"
           style={{
-            width: `${CELL_SIZE}px`,
-            height: `${CELL_SIZE}px`,
-            backgroundColor: '#fff', // 白背景（Pygameと同じ）
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontSize: '32px', // Pygameのフォントサイズ32に合わせる
-            color: char === "■" ? '#000' : '#fff', // 壁は黒、空白は白（Pygameと同じ）
-            fontFamily: 'monospace', // 等幅フォント
+            width: `${CONFIG.CELL_SIZE}px`,
+            height: `${CONFIG.CELL_SIZE}px`,
+            color: char === "■" ? '#000' : '#fff',
           }}
         >
           {char === "■" ? "■" : "　"}
@@ -47,283 +123,174 @@ const CourseRow = memo(({ row, rowIndex }: { row: string[], rowIndex: number }) 
   );
 });
 
+// プレイヤーコンポーネント
+const Player = memo(({ x, row }: { x: number, row: number }) => {
+  return (
+    <div
+      className="absolute flex items-center justify-center text-2xl font-mono text-black z-10"
+      style={{
+        left: `${x * CONFIG.CELL_SIZE}px`,
+        top: `${row * CONFIG.CELL_SIZE}px`,
+        width: `${CONFIG.CELL_SIZE}px`,
+        height: `${CONFIG.CELL_SIZE}px`,
+      }}
+    >
+      車
+    </div>
+  );
+});
+
+// スコア表示コンポーネント
+const ScoreDisplay = memo(({ distance }: { distance: number }) => {
+  return (
+    <div className="absolute top-2 left-2 bg-white border border-black px-1 py-0.5 text-base text-black font-mono z-20">
+      距離: {distance}
+    </div>
+  );
+});
+
+// ゲームオーバー画面コンポーネント
+const GameOverScreen = memo(({ 
+  distance, 
+  onRestart 
+}: { 
+  distance: number, 
+  onRestart: () => void 
+}) => {
+  return (
+    <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-center text-black font-mono z-30">
+      <div className="text-xl mb-2.5">ゲームオーバー</div>
+      <div className="text-base mb-5">最終距離: {distance}</div>
+      <div className="text-sm mb-5">Rキーでリスタート</div>
+      <button
+        onClick={onRestart}
+        className="bg-black text-white border-none px-5 py-2.5 text-base font-mono rounded cursor-pointer hover:bg-gray-800 transition-colors"
+      >
+        リスタート
+      </button>
+    </div>
+  );
+});
+
+// コントロールボタンコンポーネント
+const ControlButtons = memo(({ 
+  onLeftPress, 
+  onRightPress 
+}: { 
+  onLeftPress: () => void, 
+  onRightPress: () => void 
+}) => {
+  return (
+    <div 
+      className="flex justify-between items-center w-full mt-5 px-5 mb-5"
+      style={{ maxWidth: `${CONFIG.SCREEN_WIDTH}px` }}
+    >
+      <button
+        onClick={onLeftPress}
+        className="bg-black text-white border-none w-15 h-15 rounded-full text-xl font-mono cursor-pointer flex items-center justify-center flex-shrink-0 hover:bg-gray-800 transition-colors active:scale-95"
+      >
+        ←
+      </button>
+      <button
+        onClick={onRightPress}
+        className="bg-black text-white border-none w-15 h-15 rounded-full text-xl font-mono cursor-pointer flex items-center justify-center flex-shrink-0 hover:bg-gray-800 transition-colors active:scale-95"
+      >
+        →
+      </button>
+    </div>
+  );
+});
+
+// ゲーム画面コンポーネント
+const GameScreen = memo(({ 
+  courseRows, 
+  playerX, 
+  playerRow, 
+  distance 
+}: { 
+  courseRows: string[][], 
+  playerX: number, 
+  playerRow: number, 
+  distance: number 
+}) => {
+  return (
+    <>
+      <div className="relative w-full h-full">
+        {courseRows.map((row, index) => (
+          <CourseRow 
+            key={index} 
+            row={row} 
+            rowIndex={index} 
+          />
+        ))}
+      </div>
+      <Player x={playerX} row={playerRow} />
+      <ScoreDisplay distance={distance} />
+    </>
+  );
+});
+
+// ========================================
+// メインアプリコンポーネント
+// ========================================
+
 function App() {
   const [gameState, setGameState] = useState<GameState>(() => {
     const initialState = createInitialGameState();
-    // pygameの実装に合わせて、初期状態は空のコースから開始
     initialState.courseRows = [];
     return initialState;
   });
-  
-  const gameLoopRef = useRef<number | undefined>(undefined);
-  const lastTimeRef = useRef<number>(0);
-  const gameStateRef = useRef<GameState>(gameState);
-  const keysRef = useRef<{ [key: string]: boolean }>({});
 
-  // gameStateRefを常に最新状態に同期
-  useEffect(() => {
-    gameStateRef.current = gameState;
-  }, [gameState]);
-
-  // キー入力イベント処理
-  const handleKeyDown = useCallback((event: KeyboardEvent) => {
-    keysRef.current[event.key] = true;
-    
-    // リスタート処理
-    if (event.key === 'r' || event.key === 'R') {
-      if (gameStateRef.current.gameOver) {
-        const newState = createInitialGameState();
-        // pygameの実装に合わせて、リスタート時も空のコースから開始
-        newState.courseRows = [];
-        setGameState(newState);
-      }
-    }
-  }, []);
-
-  const handleKeyUp = useCallback((event: KeyboardEvent) => {
-    keysRef.current[event.key] = false;
-  }, []);
-
-  // タッチ操作
-  const handleLeftPress = useCallback(() => {
-    keysRef.current['left'] = true;
-    setTimeout(() => {
-      keysRef.current['left'] = false;
-    }, 100);
-  }, []);
-
-  const handleRightPress = useCallback(() => {
-    keysRef.current['right'] = true;
-    setTimeout(() => {
-      keysRef.current['right'] = false;
-    }, 100);
-  }, []);
-
-  // リスタート
   const handleRestart = useCallback(() => {
     const newState = createInitialGameState();
-    // pygameの実装に合わせて、リスタート時も空のコースから開始
     newState.courseRows = [];
     setGameState(newState);
   }, []);
 
-  // ゲームループ
-  const gameLoop = useCallback((currentTime: number) => {
-    // FPS制御
-    if (currentTime - lastTimeRef.current < 1000 / FPS) {
-      gameLoopRef.current = requestAnimationFrame(gameLoop);
-      return;
-    }
-    
-    lastTimeRef.current = currentTime;
-    const currentState = gameStateRef.current;
+  // キーボード入力管理
+  const keyboardKeysRef = useKeyboardInput(handleRestart, gameState.gameOver);
 
-    if (!currentState.gameOver) {
-      const newState = updateGameState(currentState, keysRef.current);
-      setGameState(newState);
-    }
+  // タッチコントロール管理
+  const { keysRef: touchKeysRef, pressLeft, pressRight } = useTouchControls();
 
-    gameLoopRef.current = requestAnimationFrame(gameLoop);
-  }, []);
-
-  // 初期化とイベントリスナー設定
+  // 両方の入力を統合
+  const combinedKeysRef = useRef<{ [key: string]: boolean }>({});
+  
   useEffect(() => {
-    // イベントリスナー設定
-    window.addEventListener('keydown', handleKeyDown);
-    window.addEventListener('keyup', handleKeyUp);
-    
-    // ゲームループ開始
-    gameLoopRef.current = requestAnimationFrame(gameLoop);
+    Object.assign(combinedKeysRef.current, keyboardKeysRef.current, touchKeysRef.current);
+  });
 
-    // クリーンアップ
-    return () => {
-      window.removeEventListener('keydown', handleKeyDown);
-      window.removeEventListener('keyup', handleKeyUp);
-      if (gameLoopRef.current) {
-        cancelAnimationFrame(gameLoopRef.current);
-      }
-    };
-  }, [gameLoop, handleKeyDown, handleKeyUp]);
-
-  // コース描画
-  const renderCourse = () => {
-    const rows = [];
-    for (let screenRow = 0; screenRow < ROWS; screenRow++) {
-      if (screenRow < gameState.courseRows.length) {
-        const courseRow = gameState.courseRows[screenRow];
-        rows.push(
-          <CourseRow 
-            key={screenRow} 
-            row={courseRow} 
-            rowIndex={screenRow} 
-          />
-        );
-      }
-    }
-    return rows;
-  };
-
-  // プレイヤー描画
-  const renderPlayer = () => {
-    return (
-      <div
-        style={{
-          position: 'absolute',
-          left: `${gameState.playerX * CELL_SIZE}px`,
-          top: `${gameState.playerRow * CELL_SIZE}px`,
-          width: `${CELL_SIZE}px`,
-          height: `${CELL_SIZE}px`,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          fontSize: '28px',
-          color: '#000', // 黒文字（Pygameと同じ）
-          fontFamily: 'monospace', // 等幅フォント
-          zIndex: 10,
-        }}
-      >
-        車
-      </div>
-    );
-  };
-
-  // UI描画
-  const renderUI = () => {
-    return (
-      <div style={{
-        position: 'absolute',
-        top: '8px',
-        left: '8px',
-        backgroundColor: '#fff', // 白背景（Pygameと同じ）
-        border: '1px solid #000', // 黒枠線（Pygameと同じ）
-        padding: '2px 4px',
-        fontSize: '16px',
-        color: '#000', // 黒文字（Pygameと同じ）
-        fontFamily: 'monospace', // 等幅フォント
-        zIndex: 20
-      }}>
-        距離: {gameState.scrollOffset}
-      </div>
-    );
-  };
+  // ゲームループ
+  useGameLoop(gameState, setGameState, combinedKeysRef);
 
   return (
-    <div style={{ 
-      display: 'flex', 
-      flexDirection: 'column',
-      justifyContent: 'flex-start', 
-      alignItems: 'center', 
-      minHeight: '100vh',
-      height: '100vh',
-      padding: '10px',
-      backgroundColor: '#fff', // 白背景（Pygameと同じ）
-      fontFamily: 'monospace', // 等幅フォント
-      boxSizing: 'border-box'
-    }}>
-      <div style={{
-        width: '100%',
-        maxWidth: `${SCREEN_WIDTH}px`,
-        height: `${SCREEN_HEIGHT}px`,
-        backgroundColor: '#fff', // 白背景（Pygameと同じ）
-        border: '1px solid #000', // 黒枠線
-        position: 'relative',
-        overflow: 'hidden'
-      }}>
-        {!gameState.gameOver && (
-          <>
-            <div style={{ position: 'relative', width: '100%', height: '100%' }}>
-              {renderCourse()}
-            </div>
-            {renderPlayer()}
-            {renderUI()}
-          </>
-        )}
-        
-        {gameState.gameOver && (
-          <div style={{
-            position: 'absolute',
-            top: '50%',
-            left: '50%',
-            transform: 'translate(-50%, -50%)',
-            textAlign: 'center',
-            color: '#000', // 黒文字（Pygameと同じ）
-            fontFamily: 'monospace', // 等幅フォント
-            zIndex: 30
-          }}>
-            <div style={{ fontSize: '20px', marginBottom: '10px' }}>ゲームオーバー</div>
-            <div style={{ fontSize: '16px', marginBottom: '20px' }}>最終距離: {gameState.scrollOffset}</div>
-            <div style={{ fontSize: '14px', marginBottom: '20px' }}>Rキーでリスタート</div>
-            <button
-              onClick={handleRestart}
-              style={{
-                backgroundColor: '#000',
-                color: '#fff',
-                border: 'none',
-                padding: '10px 20px',
-                fontSize: '16px',
-                fontFamily: 'monospace',
-                borderRadius: '5px',
-                cursor: 'pointer'
-              }}
-            >
-              リスタート
-            </button>
-          </div>
+    <div className="flex flex-col justify-start items-center min-h-screen h-screen p-2.5 bg-white font-mono box-border">
+      <div 
+        className="w-full bg-white border border-black relative overflow-hidden"
+        style={{
+          maxWidth: `${CONFIG.SCREEN_WIDTH}px`,
+          height: `${CONFIG.SCREEN_HEIGHT}px`,
+        }}
+      >
+        {!gameState.gameOver ? (
+          <GameScreen
+            courseRows={gameState.courseRows}
+            playerX={gameState.playerX}
+            playerRow={gameState.playerRow}
+            distance={gameState.scrollOffset}
+          />
+        ) : (
+          <GameOverScreen
+            distance={gameState.scrollOffset}
+            onRestart={handleRestart}
+          />
         )}
       </div>
 
-      {/* コントロールボタン */}
-      <div style={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        width: '100%',
-        maxWidth: `${SCREEN_WIDTH}px`,
-        marginTop: '20px',
-        padding: '0 20px',
-        marginBottom: '20px'
-      }}>
-        <button
-          onClick={handleLeftPress}
-          style={{
-            backgroundColor: '#000',
-            color: '#fff',
-            border: 'none',
-            width: '60px',
-            height: '60px',
-            borderRadius: '50%',
-            fontSize: '20px',
-            fontFamily: 'monospace',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            flexShrink: 0
-          }}
-        >
-          ←
-        </button>
-        <button
-          onClick={handleRightPress}
-          style={{
-            backgroundColor: '#000',
-            color: '#fff',
-            border: 'none',
-            width: '60px',
-            height: '60px',
-            borderRadius: '50%',
-            fontSize: '20px',
-            fontFamily: 'monospace',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            flexShrink: 0
-          }}
-        >
-          →
-        </button>
-      </div>
+      <ControlButtons
+        onLeftPress={pressLeft}
+        onRightPress={pressRight}
+      />
     </div>
   );
 }
