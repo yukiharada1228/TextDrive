@@ -11,12 +11,12 @@ export const CONFIG = {
   KEY_REPEAT_DELAY: 5,
 };
 
-export const ROWS = Math.floor(CONFIG.SCREEN_HEIGHT / CONFIG.CELL_SIZE);
+const ROWS = Math.floor(CONFIG.SCREEN_HEIGHT / CONFIG.CELL_SIZE);
 
 // ========================
 // コースパターン
 // ========================
-export const COURSE_PATTERNS = [
+const COURSE_PATTERNS = [
   "■■■   ■■■",
   "■■■■   ■■",
   "■■■■■   ■",
@@ -59,26 +59,15 @@ const rowFromPattern = (patternIndex: number): string[] =>
 // ========================
 // コース生成
 // ========================
-export const generateNewRow = (currentPattern: number): { row: string[]; newPattern: number } => {
+const generateNewRow = (currentPattern: number): { row: string[]; newPattern: number } => {
   const newPattern = nextPatternIndex(currentPattern);
   return { row: rowFromPattern(newPattern), newPattern };
-};
-
-export const initializeCourse = (): string[][] => {
-  let rows: string[][] = [];
-  let pattern = 0;
-  for (let i = 0; i < ROWS; i++) {
-    const { row, newPattern } = generateNewRow(pattern);
-    rows.push(row);
-    pattern = newPattern;
-  }
-  return rows;
 };
 
 // ========================
 // 当たり判定
 // ========================
-export const checkCollision = (x: number, row: number, courseRows: string[][]): boolean => {
+const checkCollision = (x: number, row: number, courseRows: string[][]): boolean => {
   if (row >= courseRows.length || x < 0 || x >= courseRows[row].length) return false;
   return courseRows[row][x] === "■";
 };
