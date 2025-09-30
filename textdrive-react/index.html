@@ -1,10 +1,79 @@
 <!doctype html>
-<html lang="en">
+<html lang="ja">
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.ico" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>textdrive-react</title>
+    
+    <!-- 基本SEOメタタグ -->
+    <title>TextDrive - 文字だけドライブゲーム | 無料ブラウザゲーム</title>
+    <meta name="description" content="TextDriveは文字（■）で構成されたコースを車で走り抜けるシンプルなブラウザゲームです。左右の矢印キーで操作し、壁にぶつからずにできるだけ長い距離を走り抜けましょう。無料でプレイできます。" />
+    <meta name="keywords" content="ドライブゲーム,ブラウザゲーム,無料ゲーム,文字ゲーム,レーシングゲーム,シンプルゲーム,オンラインゲーム,TextDrive" />
+    <meta name="author" content="TextDrive" />
+    <meta name="robots" content="index, follow" />
+    <meta name="googlebot" content="index, follow" />
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://text-drive.vercel.app/" />
+    <meta property="og:title" content="TextDrive - 文字だけドライブゲーム" />
+    <meta property="og:description" content="文字（■）で構成されたコースを車で走り抜けるシンプルなブラウザゲーム。無料でプレイできます。" />
+    <meta property="og:image" content="https://text-drive.vercel.app/og-image.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:site_name" content="TextDrive" />
+    <meta property="og:locale" content="ja_JP" />
+    
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image" />
+    <meta property="twitter:url" content="https://text-drive.vercel.app/" />
+    <meta property="twitter:title" content="TextDrive - 文字だけドライブゲーム" />
+    <meta property="twitter:description" content="文字（■）で構成されたコースを車で走り抜けるシンプルなブラウザゲーム。無料でプレイできます。" />
+    <meta property="twitter:image" content="https://text-drive.vercel.app/og-image.png" />
+    
+    <!-- 追加SEOメタタグ -->
+    <meta name="theme-color" content="#000000" />
+    <meta name="msapplication-TileColor" content="#000000" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black" />
+    <meta name="apple-mobile-web-app-title" content="TextDrive" />
+    
+    <!-- 構造化データ (JSON-LD) -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "VideoGame",
+      "name": "TextDrive - 文字だけドライブゲーム",
+      "description": "文字（■）で構成されたコースを車で走り抜けるシンプルなブラウザゲーム。左右の矢印キーで操作し、壁にぶつからずにできるだけ長い距離を走り抜けましょう。",
+      "url": "https://text-drive.vercel.app/",
+      "image": "https://text-drive.vercel.app/og-image.png",
+      "genre": "レーシングゲーム",
+      "gamePlatform": "Webブラウザ",
+      "operatingSystem": "Windows, macOS, Linux, iOS, Android",
+      "applicationCategory": "Game",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "JPY"
+      },
+      "publisher": {
+        "@type": "Organization",
+        "name": "TextDrive"
+      },
+      "datePublished": "2024-01-01",
+      "inLanguage": "ja",
+      "playMode": "SinglePlayer",
+      "gameItem": {
+        "@type": "Thing",
+        "name": "車",
+        "description": "プレイヤーが操作する車"
+      }
+    }
+    </script>
+    
+    <!-- プリロード -->
+    <link rel="preload" href="/src/main.tsx" as="script" />
+    <link rel="preload" href="/src/index.css" as="style" />
   </head>
   <body>
     <div id="root"></div>
