@@ -198,15 +198,13 @@ const ControlButtons = memo(({
     >
       <button
         onClick={onLeftPress}
-        className="bg-black text-white border-none w-20 h-20 sm:w-24 sm:h-24 rounded-full text-2xl sm:text-3xl font-mono cursor-pointer flex items-center justify-center flex-shrink-0 hover:bg-gray-800 transition-colors active:scale-95 touch-manipulation"
-        style={{ minWidth: '80px', minHeight: '80px' }}
+        className="bg-black text-white border-none w-15 h-15 rounded-full text-xl font-mono cursor-pointer flex items-center justify-center flex-shrink-0 hover:bg-gray-800 transition-colors active:scale-95"
       >
         ←
       </button>
       <button
         onClick={onRightPress}
-        className="bg-black text-white border-none w-20 h-20 sm:w-24 sm:h-24 rounded-full text-2xl sm:text-3xl font-mono cursor-pointer flex items-center justify-center flex-shrink-0 hover:bg-gray-800 transition-colors active:scale-95 touch-manipulation"
-        style={{ minWidth: '80px', minHeight: '80px' }}
+        className="bg-black text-white border-none w-15 h-15 rounded-full text-xl font-mono cursor-pointer flex items-center justify-center flex-shrink-0 hover:bg-gray-800 transition-colors active:scale-95"
       >
         →
       </button>
